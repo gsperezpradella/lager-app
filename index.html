@@ -65,6 +65,10 @@ input:focus{border-color:#6366f1}
       </div>
     </div>
   </div>
+  <div style="padding:0 12px 8px">
+    <input id="search-input" placeholder="🔍 Bestellnummer suchen..." oninput="searchBest(this.value)" style="background:#fff;border:1.5px solid #e2e8f0;border-radius:12px;padding:11px 14px;font-size:14px;width:100%">
+  </div>
+  <div id="search-results" style="display:none;padding:0 12px"></div>
   <div class="scr" id="home-list"></div>
   <div class="fab"><button class="btnp" onclick="showProjForm()">+ Neues Projekt</button></div>
 </div>
@@ -272,6 +276,57 @@ function renderHome() {
 }
 
 window.openProj = function(id) { window.pid = id; go('project'); };
+window.searchBest = function(val) {
+  var res = document.getElementById('search-results');
+  var list = document.getElementById('home-list');
+  if (!val.trim()) {
+    res.style.display = 'none';
+    list.style.display = 'block';
+    return;
+  }
+  list.style.display = 'none';
+  res.style.display = 'block';
+  var ps = window.lagerData.projects || [];
+  var h = '';
+  var found = false;
+  for (var i = 0; i < ps.length; i++) {
+    var bl = ps[i].bestellungen || [];
+    for (var j = 0; j < bl.length; j++) {
+      if (bl[j].bestellnummer.toLowerCase().indexOf(val.toLowerCase()) !== -1) {
+        found = true;
+        var bid = bl[j].id; var pid = ps[i].id;
+        var pl = bl[j].positionen || [];
+        var pend = 0; var entr = 0; var retr = 0;
+        for (var k = 0; k < pl.length; k++) {
+          if (pl[k].status === 'pendiente') pend++;
+          else if (pl[k].status === 'entregado') entr++;
+          else if (pl[k].status === 'retirado') retr++;
+        }
+        h += '<div class="card tap" onclick="openFromSearch(\'' + pid + '\',\'' + bid + '\')">';
+        h += '<div style="font-size:11px;color:#8892b0;margin-bottom:4px">' + ps[i].name + '</div>';
+        h += '<div class="row"><div>';
+        h += '<div style="font-weight:700;font-size:15px">' + bl[j].bestellnummer + '</div>';
+        h += '<div style="font-size:12px;color:#8892b0;margin-top:2px">' + bl[j].lieferant + '</div><div>';
+        if (pend) h += '<span class="tag tr">' + pend + ' ausstehend</span>';
+        if (entr) h += '<span class="tag tgr">' + entr + ' geliefert</span>';
+        if (retr) h += '<span class="tag tb">' + retr + ' entnommen</span>';
+        h += '</div></div><span class="chev">&#8250;</span></div></div>';
+      }
+    }
+  }
+  if (!found) h = '<div class="empty">Keine Bestellung gefunden.</div>';
+  res.innerHTML = h;
+};
+
+window.openFromSearch = function(projId, bestId) {
+  document.getElementById('search-input').value = '';
+  document.getElementById('search-results').style.display = 'none';
+  document.getElementById('home-list').style.display = 'block';
+  window.pid = projId;
+  window.bid = bestId;
+  go('best');
+};
+
 window.showProjForm = function() { document.getElementById('pname').value = ''; document.getElementById('novl').classList.add('open'); };
 window.closeProjForm = function() { document.getElementById('novl').classList.remove('open'); };
 window.createProj = async function() {
@@ -511,7 +566,7 @@ window.handlePdf = function(inp) {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        model: 'claude-haiku-4-5-20251001', max_tokens: 1000,
+        model: 'claude-sonnet-4-20250514', max_tokens: 1000,
         messages: [{ role: 'user', content: [
           { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: b64 } },
           { type: 'text',           text: 'Extract from this Auftragsbestaetigung. Return ONLY valid JSON no markdown: {"bestellnummer":"order number from Ihre Best. field","lieferant":"supplier name","positionen":[{"pos":"1","beschreibung":"article","menge":1,"einheit":"Stk"}]}',
