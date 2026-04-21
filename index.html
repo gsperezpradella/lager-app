@@ -511,10 +511,11 @@ window.handlePdf = function(inp) {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-5-20251001', max_tokens: 1000,
+        model: 'claude-sonnet-4-20250514', max_tokens: 1000,
         messages: [{ role: 'user', content: [
           { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: b64 } },
-          { type: 'text', text: 'Extract from this Auftragsbestaetigung. Return ONLY valid JSON no markdown: {"bestellnummer":"order number from Ihre Best. field","lieferant":"supplier name","positionen":[{"pos":"1","beschreibung":"article","menge":1,"einheit":"Stk"}]}' }
+          { type: 'text',           text: 'Extract from this Auftragsbestaetigung. Return ONLY valid JSON no markdown: {"bestellnummer":"order number from Ihre Best. field","lieferant":"supplier name","positionen":[{"pos":"1","beschreibung":"article","menge":1,"einheit":"Stk"}]}',
+          cache_control: {"type": "ephemeral"} }
         ]}]
       })
     }).then(function(r) { return r.json(); }).then(function(d) {
