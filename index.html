@@ -507,7 +507,7 @@ window.handlePdf = function(inp) {
   reader.onerror = function() { msg.textContent = 'Fehler.'; };
   reader.onload = function() {
     var b64 = reader.result.split(',')[1];
-    fetch('https://api.anthropic.com/v1/messages', {
+          fetch('https://lager-proxy.gsperezpradella.workers.dev', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
